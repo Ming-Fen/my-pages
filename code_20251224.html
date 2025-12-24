@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>炫彩圣诞树网页</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="christmasTreeCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('christmasTreeCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // 圣诞树类
+        class ChristmasTree {
+            constructor() {
+                this.starColor = 'rgba(255, 255, 0, 0.8)';
+                this.treeColor = 'rgba(0, 150, 0, 0.8)';
+                this.ornamentColors = ['rgba(255, 0, 0, 0.8)', 'rgba(0, 0, 255, 0.8)', 'rgba(255, 165, 0, 0.8)', 'rgba(255, 0, 255, 0.8)'];
+                this.lightColor = 'rgba(255, 255, 255, 0.6)';
+                this.snowColor = 'rgba(255, 255, 255, 0.4)';
+                this.snowflakes = [];
+                this.lights = [];
+                this.ornaments = [];
+                this.init();
+            }
+
+            init() {
+                // 初始化雪花
+                for (let i = 0; i < 100; i++) {
+                    this.snowflakes.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        size: Math.random() * 3 + 1,
+                        speed: Math.random() * 2 + 1
+                    });
+                }
+                // 初始化圣诞树
+                this.drawTree(canvas.width / 2, canvas.height - 100, 150, 5);
+                // 初始化灯光
+                for (let i = 0; i < 30; i++) {
+                    this.lights.push({
+                        x: canvas.width / 2 + (Math.random() - 0.5) * 120,
+                        y: canvas.height - 100 - (Math.random() * 100 + 50),
+                        size: Math.random() * 2 + 1,
+                        alpha: Math.random() * 0.5 + 0.5
+                    });
+                }
+                // 初始化装饰球
+                for (let i = 0; i < 20; i++) {
+                    this.ornaments.push({
+                        x: canvas.width / 2 + (Math.random() - 0.5) * 100,
+                        y: canvas.height - 100 - (Math.random() * 80 + 60),
+                        size: Math.random() * 3 + 2,
+                        color: this.ornamentColors[Math.floor(Math.random() * this.ornamentColors.length)]
+                    });
+                }
+                this.animate();
+            }
+
+            drawTree(x, y, length, level) {
+                if (level === 0) return;
+                // 画树枝
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                const endX1 = x + length * Math.cos(Math.PI / 6);
+                const endY1 = y - length * Math.sin(Math.PI / 6);
+                const endX2 = x - length * Math.cos(Math.PI / 6);
+                const endY2 = y - length * Math.sin(Math.PI / 6);
+                ctx.lineTo(endX1, endY1);
+                ctx.lineTo(endX2, endY2);
+                ctx.closePath();
+                ctx.fillStyle = this.treeColor;
+                ctx.fill();
+                // 递归画分支
+                this.drawTree(endX1, endY1, length * 0.7, level - 1);
+                this.drawTree(endX2, endY2, length * 0.7, level - 1);
+                // 画树干
+                if (level === 5) {
+                    ctx.beginPath();
+                    ctx.rect(x - 10, y, 20, 50);
+                    ctx.fillStyle = 'rgba(139, 69, 19, 0.8)';
+                    ctx.fill();
+                }
+            }
+
+            drawStar(x, y, size) {
+                ctx.beginPath();
+                ctx.moveTo(x, y - size);
+                for (let i = 0; i < 4; i++) {
+                    ctx.rotate(Math.PI / 5);
+                    ctx.lineTo(x, y - size * 0.5);
+                    ctx.rotate(Math.PI / 5);
+                    ctx.lineTo(x, y - size);
+                }
+                ctx.fillStyle = this.starColor;
+                ctx.fill();
+            }
+
+            animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                // 画雪花
+                for (let i = 0; i < this.snowflakes.length; i++) {
+                    const snow = this.snowflakes[i];
+                    ctx.beginPath();
+                    ctx.arc(snow.x, snow.y, snow.size, 0, Math.PI * 2);
+                    ctx.fillStyle = this.snowColor;
+                    ctx.fill();
+                    snow.y += snow.speed;
+                    if (snow.y > canvas.height) {
+                        snow.y = 0;
+                        snow.x = Math.random() * canvas.width;
+                    }
+                }
+                // 重新画树（避免被覆盖）
+                this.drawTree(canvas.width / 2, canvas.height - 100, 150, 5);
+                // 画星星
+                this.drawStar(canvas.width / 2, canvas.height - 250, 15);
+                // 画装饰球
+                for (let i = 0; i < this.ornaments.length; i++) {
+                    const orn = this.ornaments[i];
+                    ctx.beginPath();
+                    ctx.arc(orn.x, orn.y, orn.size, 0, Math.PI * 2);
+                    ctx.fillStyle = orn.color;
+                    ctx.fill();
+                }
+                // 画灯光
+                for (let i = 0; i < this.lights.length; i++) {
+                    const light = this.lights[i];
+                    ctx.beginPath();
+                    ctx.arc(light.x, light.y, light.size, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${light.alpha})`;
+                    ctx.fill();
+                    light.alpha = Math.sin(Date.now() * 0.001 + i) * 0.3 + 0.5;
+                }
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        new ChristmasTree();
+
+        // 窗口大小变化时重置画布
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
